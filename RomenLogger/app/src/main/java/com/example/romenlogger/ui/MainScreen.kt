@@ -42,6 +42,7 @@ sealed class UploadStatus {
 @Composable
 fun MainScreen(
     isRecording: Boolean,
+    isPaused: Boolean,
     accelSamples: List<AccelSample>,
     gpsPointCount: Int,
     currentLocation: Location?,
@@ -49,6 +50,7 @@ fun MainScreen(
     uploadStatuses: Map<String, UploadStatus>,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onPauseResume: () -> Unit,
     onDelete: (Recording) -> Unit,
     onSend: (Recording) -> Unit,
 ) {
@@ -67,6 +69,7 @@ fun MainScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isRecording) Color(0xFFFFE0E0)
+                            else if (isPaused) Color(0xFFFFF3CD)
                             else MaterialTheme.colorScheme.surfaceVariant
                     )
                 ) {
@@ -79,7 +82,11 @@ fun MainScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (isRecording) "● 記録中" else "停止中",
+                                text = when {
+                                    isRecording -> "● 記録中"
+                                    isPaused -> "Ⅱ 一時停止中"
+                                    else -> "停止中"
+                                },
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isRecording) Color(0xFFC62828)
@@ -93,8 +100,13 @@ fun MainScreen(
                                 )
                             }
                         }
-                        Button(onClick = if (isRecording) onStop else onStart) {
-                            Text(if (isRecording) "停止" else "開始")
+                        if (isRecording || isPaused) {
+                            OutlinedButton(onClick = onPauseResume) {
+                                Text(if (isPaused) "再開" else "一時停止")
+                            }
+                        }
+                        Button(onClick = if (isRecording || isPaused) onStop else onStart) {
+                            Text(if (isRecording || isPaused) "終了" else "開始")
                         }
                     }
                 }

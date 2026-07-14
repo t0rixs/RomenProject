@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
   CartesianGrid,
@@ -11,7 +11,7 @@ import {
   YAxis,
   ReferenceLine,
 } from 'recharts'
-import { api, type MergedData, type MergedSample } from './api'
+import { api, type MergedData, type MergedSample, type RecordingPhoto, type RoadLabel, type RoadLabelKind } from './api'
 import { formatTime } from './format'
 
 // 振動レベルの量子化段数。Polyline をこの本数までにまとめる。
@@ -24,6 +24,14 @@ type ChartPoint = {
   sec: number
   v: number
   vMean: number
+}
+
+function roadLabelText(label: RoadLabelKind): string {
+  return label === 'paved' ? '舗装路' : '未舗装'
+}
+
+function roadLabelColor(label: RoadLabelKind): string {
+  return label === 'paved' ? '#16a34a' : '#92400e'
 }
 
 // 正規化値 t (0..1) → 青→赤の HSL カラー。
@@ -72,6 +80,12 @@ export function RecordingDetail({ recordingId, onBack }: Props) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const [tile, setTile] = useState<TileKey>('pale')
   const [isChartFullscreen, setIsChartFullscreen] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [labels, setLabels] = useState<RoadLabel[]>([])
+  const [photos, setPhotos] = useState<RecordingPhoto[]>([])
+  const [selectedLabelPoints, setSelectedLabelPoints] = useState<number[]>([])
+  const [labelError, setLabelError] = useState<string | null>(null)
+  const [isSavingLabel, setIsSavingLabel] = useState(false)
   // 移動平均の半径 [m]。0 だと平滑化なし。
   const [smoothMeters, setSmoothMeters] = useState<number>(0)
   // 色スケール上限 (m/s²)。'auto' はセッション最大値。
@@ -81,10 +95,25 @@ export function RecordingDetail({ recordingId, onBack }: Props) {
     setData(null)
     setError(null)
     setIsChartFullscreen(false)
+    setSelectedLabelPoints([])
+    setLabelError(null)
     api
       .merged(recordingId)
       .then(setData)
       .catch((e: Error) => setError(e.message))
+  }, [recordingId])
+
+  useEffect(() => {
+    setLabels([])
+    api
+      .labels(recordingId)
+      .then(setLabels)
+      .catch((e: Error) => setLabelError(e.message))
+  }, [recordingId])
+
+  useEffect(() => {
+    setPhotos([])
+    api.photos(recordingId).then(setPhotos).catch(() => setPhotos([]))
   }, [recordingId])
 
   useEffect(() => {
@@ -281,8 +310,70 @@ export function RecordingDetail({ recordingId, onBack }: Props) {
     return out
   }, [data, smoothedV])
 
+  const labelSegments = useMemo(() => {
+    if (!data) return [] as Array<{ label: RoadLabel; points: [number, number][] }>
+    return labels
+      .map((label) => {
+        const startIndex = Math.max(0, Math.min(label.startIndex, data.samples.length - 1))
+        const endIndex = Math.max(0, Math.min(label.endIndex, data.samples.length - 1))
+        const points = data.samples
+          .slice(startIndex, endIndex + 1)
+          .map((s) => [s.lat, s.lon] as [number, number])
+        return { label, points }
+      })
+      .filter((seg) => seg.points.length >= 2)
+  }, [data, labels])
+
+  const selectedLabelSegment = useMemo<[number, number][]>(() => {
+    if (!data || selectedLabelPoints.length !== 2) return []
+    const [a, b] = selectedLabelPoints
+    const startIndex = Math.min(a, b)
+    const endIndex = Math.max(a, b)
+    return data.samples
+      .slice(startIndex, endIndex + 1)
+      .map((s) => [s.lat, s.lon] as [number, number])
+  }, [data, selectedLabelPoints])
+
   const hoverSample: MergedSample | null =
     hoverIdx != null && data?.samples[hoverIdx] ? data.samples[hoverIdx] : null
+
+  const selectLabelPoint = (idx: number) => {
+    setLabelError(null)
+    setSelectedLabelPoints((prev) => {
+      if (prev.length >= 2) return [idx]
+      if (prev.includes(idx)) return prev.filter((p) => p !== idx)
+      return [...prev, idx]
+    })
+  }
+
+  const saveRoadLabel = async (label: RoadLabelKind) => {
+    if (selectedLabelPoints.length !== 2) return
+    setIsSavingLabel(true)
+    setLabelError(null)
+    try {
+      const [a, b] = selectedLabelPoints
+      const res = await api.addLabel(recordingId, label, a, b)
+      setLabels(res.labels)
+      setSelectedLabelPoints([])
+    } catch (e) {
+      setLabelError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setIsSavingLabel(false)
+    }
+  }
+
+  const deleteRoadLabel = async (labelId: string) => {
+    setIsSavingLabel(true)
+    setLabelError(null)
+    try {
+      const res = await api.deleteLabel(recordingId, labelId)
+      setLabels(res.labels)
+    } catch (e) {
+      setLabelError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setIsSavingLabel(false)
+    }
+  }
 
   return (
     <div className="page detail">
@@ -301,6 +392,17 @@ export function RecordingDetail({ recordingId, onBack }: Props) {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            setIsEditMode((v) => !v)
+            setSelectedLabelPoints([])
+            setLabelError(null)
+          }}
+          aria-pressed={isEditMode}
+        >
+          edit
+        </button>
       </header>
 
       {error && <div className="error">読込失敗: {error}</div>}
@@ -343,6 +445,78 @@ export function RecordingDetail({ recordingId, onBack }: Props) {
                   />
                 ),
               )}
+              {isEditMode &&
+                labelSegments.map(({ label, points }) => (
+                  <Polyline
+                    key={label.id}
+                    positions={points}
+                    pathOptions={{
+                      color: roadLabelColor(label.label),
+                      weight: 10,
+                      opacity: 0.72,
+                      lineCap: 'round',
+                      lineJoin: 'round',
+                    }}
+                  />
+                ))}
+              {isEditMode && selectedLabelSegment.length >= 2 && (
+                <Polyline
+                  positions={selectedLabelSegment}
+                  pathOptions={{
+                    color: '#111827',
+                    weight: 8,
+                    opacity: 0.78,
+                    dashArray: '8 6',
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+              )}
+              {photos.map((photo) => (
+                <CircleMarker
+                  key={photo.id}
+                  center={[photo.lat, photo.lon]}
+                  radius={8}
+                  pathOptions={{
+                    color: '#ffffff',
+                    weight: 3,
+                    fillColor: '#7c3aed',
+                    fillOpacity: 1,
+                  }}
+                >
+                  <Popup minWidth={240}>
+                    <div className="photo-popup">
+                      <img
+                        src={api.photoUrl(recordingId, photo.fileName)}
+                        alt={formatTime(photo.capturedAtMs)}
+                      />
+                      <strong>{formatTime(photo.capturedAtMs)}</strong>
+                      <span>
+                        {photo.lat.toFixed(6)}, {photo.lon.toFixed(6)}
+                      </span>
+                      {photo.accuracyM != null && <span>精度: {photo.accuracyM.toFixed(1)} m</span>}
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              ))}
+              {isEditMode &&
+                data.samples.map((sample, idx) => {
+                  const selected = selectedLabelPoints.includes(idx)
+                  return (
+                    <CircleMarker
+                      key={idx}
+                      center={[sample.lat, sample.lon]}
+                      radius={selected ? 7 : 3}
+                      eventHandlers={{ click: () => selectLabelPoint(idx) }}
+                      pathOptions={{
+                        color: selected ? '#111827' : '#475569',
+                        weight: selected ? 3 : 1,
+                        fillColor: selected ? '#facc15' : '#ffffff',
+                        fillOpacity: selected ? 1 : 0.82,
+                      }}
+                    />
+                  )
+                })}
               {/* チャート ホバー時のみ強調マーカーを 1 個だけ */}
               {hoverSample && hoverIdx != null && (
                 <CircleMarker
@@ -370,7 +544,64 @@ export function RecordingDetail({ recordingId, onBack }: Props) {
               </div>
               <div>バケット幅: {data.bucketMs} ms</div>
               <div>GPS点数: {data.gpsCount}</div>
+              <div>写真: {photos.length}枚（紫の点）</div>
             </div>
+
+            {isEditMode && (
+              <div className="info-card edit-panel">
+                <div className="edit-panel-row">
+                  <span>editモード</span>
+                  <strong>ラベル済み: {labels.length}</strong>
+                </div>
+                <div>
+                  選択: {selectedLabelPoints.length}/2
+                  {selectedLabelPoints.length === 2
+                    ? ` (${Math.min(...selectedLabelPoints)} - ${Math.max(...selectedLabelPoints)})`
+                    : ''}
+                </div>
+                {selectedLabelPoints.length === 2 && (
+                  <div className="label-buttons">
+                    <button
+                      type="button"
+                      onClick={() => saveRoadLabel('paved')}
+                      disabled={isSavingLabel}
+                    >
+                      舗装路
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => saveRoadLabel('unpaved')}
+                      disabled={isSavingLabel}
+                    >
+                      未舗装
+                    </button>
+                  </div>
+                )}
+                {labelError && <div className="edit-error">ラベル保存エラー: {labelError}</div>}
+                {labels.length > 0 && (
+                  <div className="label-list">
+                    {labels.map((label) => (
+                      <div key={label.id} className="label-list-item">
+                        <span>
+                          <span
+                            className="label-swatch"
+                            style={{ background: roadLabelColor(label.label) }}
+                          />
+                          {roadLabelText(label.label)} {label.startIndex}-{label.endIndex}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => deleteRoadLabel(label.id)}
+                          disabled={isSavingLabel}
+                        >
+                          削除
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="info-card">
               <div

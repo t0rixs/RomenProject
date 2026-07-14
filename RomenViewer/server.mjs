@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DATA_ROOT = path.resolve(__dirname, 'data', 'recordings')
+const LABEL_POOL_FILE = path.resolve(__dirname, 'data', 'label-pool.jsonl')
 const PORT = Number(process.env.PORT ?? 5174)
 const mergedCache = new Map()
 
@@ -51,6 +52,16 @@ const server = http.createServer(async (req, res) => {
     })
     if (pathname === '/api/recordings' && req.method === 'GET') return await listRecordings(res)
     if (pathname === '/api/upload' && req.method === 'POST') return await handleUpload(req, res)
+
+    const photosMatch = pathname.match(/^\/api\/recordings\/([^/]+)\/photos$/)
+    if (photosMatch && req.method === 'GET') return await listPhotos(res, photosMatch[1])
+
+    const labelsMatch = pathname.match(/^\/api\/recordings\/([^/]+)\/labels$/)
+    if (labelsMatch && req.method === 'GET') return await listLabels(res, labelsMatch[1])
+    if (labelsMatch && req.method === 'POST') return await addLabel(req, res, labelsMatch[1])
+
+    const labelMatch = pathname.match(/^\/api\/recordings\/([^/]+)\/labels\/([^/]+)$/)
+    if (labelMatch && req.method === 'DELETE') return await deleteLabel(res, labelMatch[1], decodeURIComponent(labelMatch[2]))
 
     const m = pathname.match(/^\/api\/recordings\/([^/]+)\/([^/]+)$/)
     if (m && req.method === 'GET') return await serveRecordingFile(res, m[1], m[2], url.searchParams)
@@ -110,6 +121,18 @@ async function listRecordings(res) {
   json(res, list)
 }
 
+async function listPhotos(res, id) {
+  if (!isSafeName(id)) return notFound(res, 'bad id')
+  const file = path.join(DATA_ROOT, id, 'photos.json')
+  if (!existsSync(file)) return json(res, [])
+  try {
+    const parsed = JSON.parse(await fs.readFile(file, 'utf8'))
+    json(res, Array.isArray(parsed) ? parsed : Array.isArray(parsed?.photos) ? parsed.photos : [])
+  } catch {
+    json(res, [])
+  }
+}
+
 async function serveRecordingFile(res, id, name, searchParams = new URLSearchParams()) {
   if (!isSafeName(id) || !isSafeName(name)) return notFound(res, 'bad name')
   const file = path.join(DATA_ROOT, id, name)
@@ -123,6 +146,7 @@ async function serveRecordingFile(res, id, name, searchParams = new URLSearchPar
   const mime =
     name.endsWith('.json') ? 'application/json; charset=utf-8' :
     name.endsWith('.csv') ? 'text/csv; charset=utf-8' :
+    name.endsWith('.jpg') || name.endsWith('.jpeg') ? 'image/jpeg' :
     'application/octet-stream'
   res.writeHead(200, { 'Content-Type': mime })
   const stream = (await fs.open(file)).createReadStream()
@@ -193,6 +217,298 @@ async function deleteRecording(res, id) {
   json(res, { ok: true })
 }
 
+async function listLabels(res, id) {
+  if (!isSafeName(id)) return notFound(res, 'bad id')
+  const merged = await readMerged(id)
+  if (!merged) return notFound(res, 'missing: merged.json')
+  if (await migrateLegacyLabels(id, merged)) await writeMerged(id, merged)
+  json(res, labelsFromSamples(id, merged.samples))
+}
+
+async function addLabel(req, res, id) {
+  if (!isSafeName(id)) return notFound(res, 'bad id')
+  const merged = await readMerged(id)
+  if (!merged) return notFound(res, 'missing: merged.json')
+  await migrateLegacyLabels(id, merged)
+
+  const body = await readJsonBody(req, 1024 * 1024)
+  const label = body?.label
+  if (label !== 'paved' && label !== 'unpaved') return badRequest(res, 'invalid label')
+
+  const samples = merged.samples
+  if (samples.length === 0) return badRequest(res, 'no samples')
+
+  const a = clampInt(body?.startIndex, 0, samples.length - 1)
+  const b = clampInt(body?.endIndex, 0, samples.length - 1)
+  const startIndex = Math.min(a, b)
+  const endIndex = Math.max(a, b)
+  if (startIndex === endIndex) return badRequest(res, 'select two different samples')
+
+  const createdAtMs = Date.now()
+  const item = {
+    id: `${createdAtMs}_${Math.random().toString(36).slice(2, 8)}`,
+    recordingId: id,
+    label,
+    createdAtMs,
+  }
+
+  for (let i = startIndex; i <= endIndex; i++) {
+    samples[i].roadLabel = label
+    samples[i].roadLabelId = item.id
+    samples[i].roadLabelCreatedAtMs = createdAtMs
+  }
+  merged.labelStorageVersion = 1
+  await writeMerged(id, merged)
+
+  const saved = makeLabelFromRange(item, samples, startIndex, endIndex)
+  await appendLabelPoolEvent('upsert', saved)
+  json(res, { ok: true, label: saved, labels: labelsFromSamples(id, samples) })
+}
+
+async function deleteLabel(res, id, labelId) {
+  if (!isSafeName(id)) return notFound(res, 'bad id')
+  if (!labelId) return badRequest(res, 'missing label id')
+  const merged = await readMerged(id)
+  if (!merged) return notFound(res, 'missing: merged.json')
+  await migrateLegacyLabels(id, merged)
+
+  let deleted = 0
+  for (const sample of merged.samples) {
+    if (sample.roadLabelId !== labelId) continue
+    delete sample.roadLabel
+    delete sample.roadLabelId
+    delete sample.roadLabelCreatedAtMs
+    deleted++
+  }
+
+  if (deleted === 0) {
+    const label = labelsFromSamples(id, merged.samples).find((item) => item.id === labelId)
+    if (label) {
+      for (let i = label.startIndex; i <= label.endIndex; i++) {
+        delete merged.samples[i].roadLabel
+        delete merged.samples[i].roadLabelId
+        delete merged.samples[i].roadLabelCreatedAtMs
+        deleted++
+      }
+    }
+  }
+
+  if (deleted === 0) return notFound(res, 'missing label')
+
+  await writeMerged(id, merged)
+  await appendLabelPoolEvent('delete', {
+    id: labelId,
+    recordingId: id,
+    deletedAtMs: Date.now(),
+  })
+  json(res, { ok: true, labels: labelsFromSamples(id, merged.samples) })
+}
+
+async function readMerged(id) {
+  const file = path.join(DATA_ROOT, id, 'merged.json')
+  if (!existsSync(file)) return null
+  const merged = JSON.parse(await fs.readFile(file, 'utf8'))
+  merged.samples = Array.isArray(merged.samples) ? merged.samples : []
+  return merged
+}
+
+async function writeMerged(id, merged) {
+  const file = path.join(DATA_ROOT, id, 'merged.json')
+  await fs.writeFile(file, `${JSON.stringify(merged, null, 2)}\n`, 'utf8')
+}
+
+async function readLabels(id) {
+  const file = path.join(DATA_ROOT, id, 'labels.json')
+  if (!existsSync(file)) return []
+  try {
+    const labels = JSON.parse(await fs.readFile(file, 'utf8'))
+    return Array.isArray(labels) ? labels : []
+  } catch {
+    return []
+  }
+}
+
+async function writeLabels(id, labels) {
+  const file = path.join(DATA_ROOT, id, 'labels.json')
+  await fs.writeFile(file, `${JSON.stringify(labels, null, 2)}\n`, 'utf8')
+}
+
+async function migrateLegacyLabels(id, merged) {
+  if (merged.labelStorageVersion >= 1) return false
+  const samples = merged.samples
+  const legacy = normalizeExistingLabels(await readLabels(id), samples)
+  for (const sample of samples) {
+    delete sample.roadLabel
+    delete sample.roadLabelId
+    delete sample.roadLabelCreatedAtMs
+  }
+  for (const label of legacy) {
+    for (let i = label.startIndex; i <= label.endIndex; i++) {
+      samples[i].roadLabel = label.label
+      samples[i].roadLabelId = label.id
+      samples[i].roadLabelCreatedAtMs = label.createdAtMs
+    }
+  }
+  merged.labelStorageVersion = 1
+  merged.labelMigratedAtMs = Date.now()
+  return true
+}
+
+function labelsFromSamples(recordingId, samples) {
+  const labels = []
+  let startIndex = -1
+  let currentLabel = null
+  let currentId = null
+  let currentCreatedAt = null
+
+  const flush = (endIndex) => {
+    if (startIndex < 0 || !currentLabel) return
+    labels.push(
+      makeLabelFromRange(
+        {
+          id: currentId ?? `${recordingId}_${startIndex}_${endIndex}_${currentLabel}`,
+          recordingId,
+          label: currentLabel,
+          createdAtMs: currentCreatedAt ?? 0,
+        },
+        samples,
+        startIndex,
+        endIndex,
+      ),
+    )
+  }
+
+  for (let i = 0; i < samples.length; i++) {
+    const sample = samples[i]
+    const label = sample.roadLabel === 'paved' || sample.roadLabel === 'unpaved'
+      ? sample.roadLabel
+      : null
+    const id = label ? sample.roadLabelId ?? null : null
+    if (label !== currentLabel || id !== currentId) {
+      flush(i - 1)
+      startIndex = label ? i : -1
+      currentLabel = label
+      currentId = id
+      currentCreatedAt = sample.roadLabelCreatedAtMs ?? null
+    }
+  }
+  flush(samples.length - 1)
+  return labels.filter(Boolean)
+}
+
+function normalizeExistingLabels(labels, samples) {
+  const valid = labels
+    .map((label) => sanitizeLabel(label, samples))
+    .filter(Boolean)
+    .sort((a, b) => (a.createdAtMs ?? 0) - (b.createdAtMs ?? 0))
+  let resolved = []
+
+  for (const label of valid) {
+    if (label.label === 'unpaved') {
+      resolved = removeRangeFromLabels(resolved, samples, label.startIndex, label.endIndex)
+      resolved.push(label)
+      continue
+    }
+
+    const unpaved = resolved.filter((item) => item.label === 'unpaved')
+    let chunks = [label]
+    for (const item of unpaved) {
+      chunks = removeRangeFromLabels(chunks, samples, item.startIndex, item.endIndex)
+    }
+    const paved = removeRangeFromLabels(
+      resolved.filter((item) => item.label === 'paved'),
+      samples,
+      label.startIndex,
+      label.endIndex,
+    )
+    resolved = [...unpaved, ...paved, ...chunks]
+  }
+
+  return resolved
+    .map((label) => sanitizeLabel(label, samples))
+    .filter(Boolean)
+    .sort((a, b) => a.startIndex - b.startIndex || a.endIndex - b.endIndex)
+}
+
+function removeRangeFromLabels(labels, samples, startIndex, endIndex) {
+  const next = []
+  for (const label of labels) {
+    if (label.endIndex < startIndex || label.startIndex > endIndex) {
+      next.push(label)
+      continue
+    }
+    if (label.startIndex < startIndex) {
+      next.push(makeLabelFromRange(label, samples, label.startIndex, startIndex - 1))
+    }
+    if (label.endIndex > endIndex) {
+      next.push(makeLabelFromRange(label, samples, endIndex + 1, label.endIndex))
+    }
+  }
+  return next.filter(Boolean)
+}
+
+function sanitizeLabel(label, samples) {
+  if (!label || (label.label !== 'paved' && label.label !== 'unpaved')) return null
+  if (samples.length === 0) return null
+  const startIndex = Math.max(0, Math.min(Number(label.startIndex), samples.length - 1))
+  const endIndex = Math.max(0, Math.min(Number(label.endIndex), samples.length - 1))
+  if (!Number.isFinite(startIndex) || !Number.isFinite(endIndex) || startIndex > endIndex) return null
+  return makeLabelFromRange(label, samples, startIndex, endIndex)
+}
+
+function makeLabelFromRange(base, samples, startIndex, endIndex) {
+  if (startIndex > endIndex) return null
+  const start = samples[startIndex]
+  const end = samples[endIndex]
+  const id =
+    base.startIndex === startIndex && base.endIndex === endIndex
+      ? base.id
+      : `${base.id}_${startIndex}_${endIndex}`
+  return {
+    ...base,
+    id,
+    startIndex,
+    endIndex,
+    startTime: Number(start.t),
+    endTime: Number(end.t),
+    startLat: Number(start.lat),
+    startLon: Number(start.lon),
+    endLat: Number(end.lat),
+    endLon: Number(end.lon),
+    sampleCount: endIndex - startIndex + 1,
+    distanceM: segmentDistance(samples, startIndex, endIndex),
+  }
+}
+
+async function appendLabelPoolEvent(action, label) {
+  await fs.appendFile(
+    LABEL_POOL_FILE,
+    `${JSON.stringify({ action, ...label, eventAtMs: Date.now() })}\n`,
+    'utf8',
+  )
+}
+
+function segmentDistance(samples, startIndex, endIndex) {
+  let total = 0
+  for (let i = startIndex + 1; i <= endIndex; i++) {
+    total += haversineM(samples[i - 1], samples[i])
+  }
+  return Math.round(total * 100) / 100
+}
+
+function haversineM(a, b) {
+  const R = 6371000
+  const toRad = (deg) => (Number(deg) * Math.PI) / 180
+  const dLat = toRad(b.lat) - toRad(a.lat)
+  const dLon = toRad(b.lon) - toRad(a.lon)
+  const la1 = toRad(a.lat)
+  const la2 = toRad(b.lat)
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
 /**
  * multipart/form-data で以下の一連を受け取る:
  *   - id           (text)        : Recording.id（ディレクトリ名）
@@ -253,6 +569,15 @@ function notFound(res, msg) {
 function badRequest(res, msg) {
   res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' })
   res.end(msg)
+}
+
+async function readJsonBody(req, maxBytes) {
+  const raw = await readAll(req, maxBytes)
+  try {
+    return JSON.parse(raw.toString('utf8'))
+  } catch {
+    throw new Error('invalid json')
+  }
 }
 
 function clampInt(value, min, max) {

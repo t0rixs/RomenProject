@@ -13,6 +13,7 @@
 RECV_PORT         ?= 5174
 VIEWER_DIR        := RomenViewer
 LOGGER_DIR        := RomenLogger
+MOBILE_DIR        := RomenMobile
 LOGGER_PACKAGE    := com.example.romenlogger
 LOGGER_ACTIVITY   := $(LOGGER_PACKAGE)/.MainActivity
 
@@ -64,13 +65,28 @@ reverse: ## THINKLET → PC のポート転送 (tcp:$(RECV_PORT))
 install: ## RomenLogger をビルドして実機にインストール
 	cd $(LOGGER_DIR) && ./gradlew installDebug
 
+mobile-apk: ## スマホ用 RomenMobile APK をビルド
+	cd $(MOBILE_DIR) && ./gradlew assembleDebug
+
+mobile-install: ## 接続中のスマホを自動検出してインストール
+	cd $(MOBILE_DIR) && ./gradlew assembleDebug
+	./scripts/mobile-device.sh install
+
+mobile-run: mobile-install ## スマホへインストールしてRomenMobileを起動
+	./scripts/mobile-device.sh run-only
+
 uninstall: ## RomenLogger をアンインストール
 	adb uninstall $(LOGGER_PACKAGE) || true
 
 launch: ## RomenLogger を実機で起動 (要 install 済)
 	adb shell am start -n $(LOGGER_ACTIVITY)
 
-start: install reverse launch ## install + reverse + launch
+keys: ## THINKLET の3ボタン設定を反映
+	adb push RomenLogger/key_config.json /sdcard/Android/data/ai.fd.thinklet.app.launcher/files/key_config.json
+	adb shell input keyevent KEYCODE_APP_SWITCH
+	adb shell input keyevent HOME
+
+start: install reverse keys launch ## install + reverse + buttons + launch
 
 ready: install reverse ## install + reverse → 続いて手動で `make dev`
 	@echo "==== READY ===="

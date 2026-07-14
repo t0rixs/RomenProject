@@ -1,0 +1,28 @@
+{
+  "key-config": [
+    {
+      "key-name": "left", "key-event": "single-released",
+      "key-action": { "action-type": "launch-app", "action-param": {
+        "package-name": "com.example.romenlogger", "class-name": "com.example.romenlogger.MainActivity",
+        "action-name": "com.example.romenlogger.action.TOGGLE_PAUSE",
+        "flags": ["FLAG_ACTIVITY_NEW_TASK", "FLAG_ACTIVITY_SINGLE_TOP", "FLAG_ACTIVITY_CLEAR_TOP"]
+      }}
+    },
+    {
+      "key-name": "center", "key-event": "single-released",
+      "key-action": { "action-type": "launch-app", "action-param": {
+        "package-name": "com.example.romenlogger", "class-name": "com.example.romenlogger.MainActivity",
+        "action-name": "com.example.romenlogger.action.TAKE_PHOTO",
+        "flags": ["FLAG_ACTIVITY_NEW_TASK", "FLAG_ACTIVITY_SINGLE_TOP", "FLAG_ACTIVITY_CLEAR_TOP"]
+      }}
+    },
+    {
+      "key-name": "right", "key-event": "single-released",
+      "key-action": { "action-type": "launch-app", "action-param": {
+        "package-name": "com.example.romenlogger", "class-name": "com.example.romenlogger.MainActivity",
+        "action-name": "com.example.romenlogger.action.TOGGLE_RECORDING",
+        "flags": ["FLAG_ACTIVITY_NEW_TASK", "FLAG_ACTIVITY_SINGLE_TOP", "FLAG_ACTIVITY_CLEAR_TOP"]
+      }}
+    }
+  ]
+}

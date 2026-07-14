@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat
 import com.example.romenlogger.MainActivity
 import com.example.romenlogger.R
 import com.example.romenlogger.data.AccelSample
+import com.example.romenlogger.data.MobileRouteCache
 import com.example.romenlogger.data.Recording
 import com.example.romenlogger.data.RecordingRepository
 import com.example.romenlogger.log.AppLog
@@ -89,6 +90,16 @@ class RecordingService : Service() {
     private val _lastLocation = MutableStateFlow<Location?>(null)
     val lastLocation: StateFlow<Location?> get() = _lastLocation
 
+    data class PhotoContext(val recording: Recording, val location: Location?)
+
+    /** 記録中なら、位置がなくても写真を現在のセッションへ紐づけられる。 */
+    fun photoContext(): PhotoContext? {
+        if (_state.value != RecordingState.Recording) return null
+        val recording = currentRecording ?: return null
+        val location = _lastLocation.value?.let { Location(it) }
+        return PhotoContext(recording, location)
+    }
+
     private var locationUpdatesRegistered = false
     private val locationListener = object : LocationListener {
         override fun onLocationChanged(loc: Location) {
@@ -127,6 +138,8 @@ class RecordingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startRecording()
+            ACTION_PAUSE -> pauseRecording()
+            ACTION_RESUME -> resumeRecording()
             ACTION_STOP -> {
                 stopRecording()
                 stopSelf()
@@ -174,7 +187,7 @@ class RecordingService : Service() {
     }
 
     fun stopRecording() {
-        if (_state.value != RecordingState.Recording) return
+        if (_state.value == RecordingState.Idle) return
 
         try { sensorManager.unregisterListener(sensorListener) } catch (_: Throwable) {}
         removeAllLocationUpdates()
@@ -194,6 +207,7 @@ class RecordingService : Service() {
                 accelCount = accelCount.get()
             )
             repository.writeMeta(finished)
+            MobileRouteCache.writeIfNeeded(finished.directory)
             currentRecording = finished
             Log.i(TAG, "recording stopped: ${finished.id} gps=${finished.gpsCount} accel=${finished.accelCount}")
         }
@@ -208,6 +222,26 @@ class RecordingService : Service() {
         clearAccelPreview()
         _gpsPointCount.value = 0
         _state.value = RecordingState.Idle
+    }
+
+    fun pauseRecording() {
+        if (_state.value != RecordingState.Recording) return
+        _state.value = RecordingState.Paused
+        try { sensorManager.unregisterListener(sensorListener) } catch (_: Throwable) {}
+        removeAllLocationUpdates()
+        try { gpsWriter?.flush(); accelWriter?.flush() } catch (_: Throwable) {}
+        clearAccelPreview()
+        updateNotification("路面記録を一時停止中")
+        AppLog.i("記録を一時停止")
+    }
+
+    fun resumeRecording() {
+        if (_state.value != RecordingState.Paused) return
+        _state.value = RecordingState.Recording
+        registerSensor()
+        requestLocationUpdates()
+        currentRecording?.let { updateNotification("位置情報 + 加速度センサーを記録しています") }
+        AppLog.i("記録を再開")
     }
 
     override fun onDestroy() {
@@ -470,6 +504,30 @@ class RecordingService : Service() {
             .build()
     }
 
+    private fun updateNotification(text: String) {
+        val recording = currentRecording ?: return
+        val notification = buildNotification(recording, text)
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun buildNotification(recording: Recording, text: String): Notification {
+        val tapIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pi = PendingIntent.getActivity(
+            this, 0, tapIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(if (_state.value == RecordingState.Paused) "路面記録を一時停止中" else "路面記録中")
+            .setContentText(text)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(pi)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
@@ -483,7 +541,7 @@ class RecordingService : Service() {
         nm.createNotificationChannel(channel)
     }
 
-    enum class RecordingState { Idle, Recording }
+    enum class RecordingState { Idle, Recording, Paused }
 
     companion object {
         private const val TAG = "RecordingService"
@@ -498,6 +556,8 @@ class RecordingService : Service() {
         private const val PREVIEW_EMIT_MS = 50L
 
         const val ACTION_START = "com.example.romenlogger.action.START"
+        const val ACTION_PAUSE = "com.example.romenlogger.action.PAUSE"
+        const val ACTION_RESUME = "com.example.romenlogger.action.RESUME"
         const val ACTION_STOP = "com.example.romenlogger.action.STOP"
 
         fun startIntent(ctx: Context): Intent =
@@ -505,5 +565,11 @@ class RecordingService : Service() {
 
         fun stopIntent(ctx: Context): Intent =
             Intent(ctx, RecordingService::class.java).apply { action = ACTION_STOP }
+
+        fun pauseIntent(ctx: Context): Intent =
+            Intent(ctx, RecordingService::class.java).apply { action = ACTION_PAUSE }
+
+        fun resumeIntent(ctx: Context): Intent =
+            Intent(ctx, RecordingService::class.java).apply { action = ACTION_RESUME }
     }
 }

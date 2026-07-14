@@ -1,0 +1,210 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.romenmobile"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission
+11-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:3:5-95
+12        android:name="android.permission.BLUETOOTH"
+12-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:3:22-65
+13        android:maxSdkVersion="30" />
+13-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:3:66-92
+14    <uses-permission
+14-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:4:5-101
+15        android:name="android.permission.BLUETOOTH_ADMIN"
+15-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:4:22-71
+16        android:maxSdkVersion="30" />
+16-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:4:72-98
+17    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+17-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:5:5-76
+17-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:5:22-73
+18    <uses-permission
+18-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:6:5-120
+19        android:name="android.permission.BLUETOOTH_SCAN"
+19-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:6:22-70
+20        android:usesPermissionFlags="neverForLocation" />
+20-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:6:71-117
+21    <uses-permission
+21-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:7:5-106
+22        android:name="android.permission.ACCESS_FINE_LOCATION"
+22-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:7:22-76
+23        android:maxSdkVersion="30" />
+23-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:7:77-103
+24    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+24-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:8:5-77
+24-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:8:22-74
+25    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+25-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:9:5-77
+25-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:9:22-74
+26    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+26-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:10:5-94
+26-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:10:22-91
+27    <uses-permission android:name="android.permission.INTERNET" />
+27-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:11:5-67
+27-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:11:22-64
+28
+29    <permission
+29-->[androidx.core:core:1.13.1] /Users/myash/.gradle/caches/8.14.4/transforms/f88626c594e15fab592db8b5dabebbf4/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+30        android:name="com.example.romenmobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+30-->[androidx.core:core:1.13.1] /Users/myash/.gradle/caches/8.14.4/transforms/f88626c594e15fab592db8b5dabebbf4/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+31        android:protectionLevel="signature" />
+31-->[androidx.core:core:1.13.1] /Users/myash/.gradle/caches/8.14.4/transforms/f88626c594e15fab592db8b5dabebbf4/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+32
+33    <uses-permission android:name="com.example.romenmobile.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+33-->[androidx.core:core:1.13.1] /Users/myash/.gradle/caches/8.14.4/transforms/f88626c594e15fab592db8b5dabebbf4/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+33-->[androidx.core:core:1.13.1] /Users/myash/.gradle/caches/8.14.4/transforms/f88626c594e15fab592db8b5dabebbf4/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+34
+35    <supports-screens
+35-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:9:5-12:40
+36        android:anyDensity="true"
+36-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:10:9-34
+37        android:largeScreens="true"
+37-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:11:9-36
+38        android:normalScreens="true" />
+38-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:12:9-37
+39
+40    <uses-feature
+40-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:14:5-16:36
+41        android:name="android.hardware.location.network"
+41-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:15:9-57
+42        android:required="false" />
+42-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:16:9-33
+43    <uses-feature
+43-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:17:5-19:36
+44        android:name="android.hardware.location.gps"
+44-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:18:9-53
+45        android:required="false" />
+45-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:19:9-33
+46    <uses-feature
+46-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:20:5-22:36
+47        android:name="android.hardware.telephony"
+47-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:21:9-50
+48        android:required="false" />
+48-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:22:9-33
+49    <uses-feature
+49-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:23:5-25:36
+50        android:name="android.hardware.wifi"
+50-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:24:9-45
+51        android:required="false" />
+51-->[org.osmdroid:osmdroid-android:6.1.20] /Users/myash/.gradle/caches/8.14.4/transforms/ab1dce2b98e1b816b49db44c94d9e1e4/transformed/osmdroid-android-6.1.20/AndroidManifest.xml:25:9-33
+52
+53    <application
+53-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:13:5-28:19
+54        android:allowBackup="true"
+54-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:14:9-35
+55        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+55-->[androidx.core:core:1.13.1] /Users/myash/.gradle/caches/8.14.4/transforms/f88626c594e15fab592db8b5dabebbf4/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+56        android:debuggable="true"
+57        android:extractNativeLibs="false"
+58        android:icon="@mipmap/ic_launcher"
+58-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:15:9-43
+59        android:label="RomenMobile"
+59-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:16:9-36
+60        android:theme="@style/Theme.RomenMobile" >
+60-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:17:9-49
+61        <service
+61-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:18:9-21:63
+62            android:name="com.example.romenmobile.BluetoothSyncService"
+62-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:19:13-49
+63            android:exported="false"
+63-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:20:13-37
+64            android:foregroundServiceType="connectedDevice" />
+64-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:21:13-60
+65
+66        <activity
+66-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:22:9-27:20
+67            android:name="com.example.romenmobile.MainActivity"
+67-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:22:19-47
+68            android:exported="true" >
+68-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:22:48-71
+69            <intent-filter>
+69-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:23:13-26:29
+70                <action android:name="android.intent.action.MAIN" />
+70-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:24:17-69
+70-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:24:25-66
+71
+72                <category android:name="android.intent.category.LAUNCHER" />
+72-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:25:17-77
+72-->/Users/myash/Documents/Programing/02_Projects/RomenProject/RomenMobile/app/src/main/AndroidManifest.xml:25:27-74
+73            </intent-filter>
+74        </activity>
+75        <activity
+75-->[androidx.compose.ui:ui-tooling-android:1.7.0] /Users/myash/.gradle/caches/8.14.4/transforms/108624390076f3cd5f8d7a51e4179133/transformed/ui-tooling-release/AndroidManifest.xml:23:9-25:39
+76            android:name="androidx.compose.ui.tooling.PreviewActivity"
+76-->[androidx.compose.ui:ui-tooling-android:1.7.0] /Users/myash/.gradle/caches/8.14.4/transforms/108624390076f3cd5f8d7a51e4179133/transformed/ui-tooling-release/AndroidManifest.xml:24:13-71
+77            android:exported="true" />
+77-->[androidx.compose.ui:ui-tooling-android:1.7.0] /Users/myash/.gradle/caches/8.14.4/transforms/108624390076f3cd5f8d7a51e4179133/transformed/ui-tooling-release/AndroidManifest.xml:25:13-36
+78
+79        <provider
+79-->[androidx.emoji2:emoji2:1.3.0] /Users/myash/.gradle/caches/8.14.4/transforms/37c385ef06e2ab42272134fe3d4439fe/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+80            android:name="androidx.startup.InitializationProvider"
+80-->[androidx.emoji2:emoji2:1.3.0] /Users/myash/.gradle/caches/8.14.4/transforms/37c385ef06e2ab42272134fe3d4439fe/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+81            android:authorities="com.example.romenmobile.androidx-startup"
+81-->[androidx.emoji2:emoji2:1.3.0] /Users/myash/.gradle/caches/8.14.4/transforms/37c385ef06e2ab42272134fe3d4439fe/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+82            android:exported="false" >
+82-->[androidx.emoji2:emoji2:1.3.0] /Users/myash/.gradle/caches/8.14.4/transforms/37c385ef06e2ab42272134fe3d4439fe/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+83            <meta-data
+83-->[androidx.emoji2:emoji2:1.3.0] /Users/myash/.gradle/caches/8.14.4/transforms/37c385ef06e2ab42272134fe3d4439fe/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+84                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+84-->[androidx.emoji2:emoji2:1.3.0] /Users/myash/.gradle/caches/8.14.4/transforms/37c385ef06e2ab42272134fe3d4439fe/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+85                android:value="androidx.startup" />
+85-->[androidx.emoji2:emoji2:1.3.0] /Users/myash/.gradle/caches/8.14.4/transforms/37c385ef06e2ab42272134fe3d4439fe/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+86            <meta-data
+86-->[androidx.lifecycle:lifecycle-process:2.8.3] /Users/myash/.gradle/caches/8.14.4/transforms/1b67eb9cd922188649022e3c160ba986/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:29:13-31:52
+87                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+87-->[androidx.lifecycle:lifecycle-process:2.8.3] /Users/myash/.gradle/caches/8.14.4/transforms/1b67eb9cd922188649022e3c160ba986/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:30:17-78
+88                android:value="androidx.startup" />
+88-->[androidx.lifecycle:lifecycle-process:2.8.3] /Users/myash/.gradle/caches/8.14.4/transforms/1b67eb9cd922188649022e3c160ba986/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:31:17-49
+89            <meta-data
+89-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+90                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+90-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+91                android:value="androidx.startup" />
+91-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+92        </provider>
+93
+94        <receiver
+94-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+95            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+95-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+96            android:directBootAware="false"
+96-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+97            android:enabled="true"
+97-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+98            android:exported="true"
+98-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+99            android:permission="android.permission.DUMP" >
+99-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+100            <intent-filter>
+100-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+101                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+101-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+101-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+102            </intent-filter>
+103            <intent-filter>
+103-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+104                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+104-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+104-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+105            </intent-filter>
+106            <intent-filter>
+106-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+107                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+107-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+107-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+108            </intent-filter>
+109            <intent-filter>
+109-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+110                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+110-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+110-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/myash/.gradle/caches/8.14.4/transforms/714ace32a6770150745b3ed091bc5cfa/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+111            </intent-filter>
+112        </receiver>
+113    </application>
+114
+115</manifest>

@@ -54,6 +54,12 @@ object Uploader {
                 writeFile(out, "merged.json", mergedFile, "application/json")
                 if (rec.gpsFile.exists()) writeFile(out, "gps.csv", rec.gpsFile, "text/csv")
                 if (rec.accelFile.exists()) writeFile(out, "accel.csv", rec.accelFile, "text/csv")
+                val photosJson = File(rec.directory, "photos.json")
+                if (photosJson.exists()) writeFile(out, "photos.json", photosJson, "application/json")
+                rec.directory.listFiles()
+                    ?.filter { it.isFile && it.name.matches(Regex("photo_[0-9]+\\.jpg")) }
+                    ?.sortedBy { it.name }
+                    ?.forEach { writeFile(out, it.name, it, "image/jpeg") }
                 out.writeBytes("--$BOUNDARY--\r\n")
                 out.flush()
             }
